@@ -1,0 +1,12 @@
+.box {
+    border-style: solid;
+    border-color: red;
+    margin: 0;
+    padding: 0;
+}
+
+.ball {
+    background-color: blue;
+    border-radius: 50%;
+    position: relative;
+}
