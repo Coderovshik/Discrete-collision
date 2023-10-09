@@ -3,9 +3,9 @@ import { Vector2d } from './vector';
 
 export class Ball {
     element: HTMLElement;
-    pos: Vector2d;
-    vel: Vector2d;
-    acceleration: Vector2d = new Vector2d(0, 0.5);
+    pos: Vector2d; // px
+    vel: Vector2d; // px/second
+    acceleration: Vector2d = new Vector2d(0, 0.001); // px/second^2
 
     constructor();
     constructor(ball: Ball);
@@ -31,9 +31,9 @@ export class Ball {
         this.render();
     }
 
-    move() {
-        this.vel = Vector2d.add(this.vel, this.acceleration);
-        this.pos = Vector2d.add(this.pos, this.vel);
+    move(dt: number) {
+        this.vel = Vector2d.add(this.vel, Vector2d.scale(this.acceleration, dt));
+        this.pos = Vector2d.add(this.pos, Vector2d.scale(this.vel, dt));
     }
 
     render() {

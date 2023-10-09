@@ -44,4 +44,8 @@ export class Vector2d {
     static rotateCounterClockwise(v: Vector2d, a: number): Vector2d {
         return new Vector2d(v.x * Math.cos(a) - v.y * Math.sin(a), v.x * Math.sin(a) + v.y * Math.cos(a));
     }
+
+    static scale(v: Vector2d, a: number) {
+        return new Vector2d(a * v.x, a * v.y);
+    }
 }

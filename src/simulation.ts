@@ -26,15 +26,21 @@ export class Simulation {
         }
     }
 
-    start() {
+    start(updateRate: number) {
+        const dt = Math.floor(1000 / updateRate);
+
         this.i = setInterval(() => {
             this.processCollision();
-            this.ball.move();
+            this.ball.move(dt);
             this.ball.render();
-        }, 10);
+        }, dt);
     }
 
     stop() {
+        if (!this.i) {
+            throw new Error('Simulation is not running');
+        }
         clearInterval(this.i);
+        this.i = null;
     }
 }
