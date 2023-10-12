@@ -1,28 +1,78 @@
 import { Box } from "./box";
 import { Ball } from "./ball";
 import { Vector2d } from "./vector";
+import { getRandomInt, getRandomFloat, getRandomSign, getRandomSignedFloatVector, getRandomUnsignedIntVector } from "./util";
 
 export class Simulation {
     private i: NodeJS.Timeout;
+    private balls: Ball[]; // ahahhahahahhahahahahhah BALLS (sorry)
+    private box: Box;
 
     constructor(root: HTMLElement);
-    constructor(root: HTMLElement, ball: Ball, box: Box);
-    constructor(root: HTMLElement, private ball: Ball = new Ball, private box: Box = new Box) {
-        this.ball = ball;
+    constructor(root: HTMLElement, ball: Ball | Ball[], box: Box);
+    constructor(root: HTMLElement, particles: number, box: Box);
+    constructor(root: HTMLElement, balls: Ball | Ball[] | number = new Ball, box: Box = new Box) {
         this.box = box;
-        this.box.element.appendChild(this.ball.element);
+        if (typeof balls === 'number') {
+            this.balls = Array<Ball>(balls).fill(null).map(() => {
+                const b = new Ball(
+                    getRandomInt(1, 10),
+                    new Vector2d(getRandomInt(0, this.box.getWidth()), getRandomInt(0, this.box.getHeight() / 2)),
+                    new Vector2d(Math.random() * 0.5, Math.random() * 0.5),
+                );
+                return b;
+            });
+            console.log(this.box.getWidth());
+        } else if (balls instanceof Ball) {
+            this.balls = [balls];
+        } else {
+            this.balls = balls;
+        }
+        this.balls.forEach((ball) => { this.box.element.appendChild(ball.element) });
         root.appendChild(this.box.element);
     }
 
-    processCollision() {
-        if (this.ball.pos.x + this.ball.getWidth() >= this.box.getWidth() || this.ball.pos.x < 0) {
-            this.ball.pos.x = this.ball.pos.x < 0 ? 0 : this.box.getWidth() - this.ball.getWidth();
-            this.ball.vel.x =  -this.ball.vel.x;
+    processCollisions() {
+        this.balls.sort((a: Ball, b: Ball) => (a.pos.x - b.pos.x));
+        let active: number[] = [0];
+        let potCols: [number, number][] = [];
+        for (let i = 1; i < this.balls.length; i++) {
+            let newActive: number[] = [];
+            for (let j of active) {
+                if (this.balls[i].pos.x <= this.balls[j].pos.x + this.balls[j].getWidth()) {
+                    potCols.push([i, j]);
+                    newActive.push(i);
+                }
+            }
+            if (newActive.length != 0) {
+                active = [...active, ...newActive];
+            } else {
+                active = [];
+            }
         }
 
-        if (this.ball.pos.y + this.ball.getWidth() >= this.box.getHeight() || this.ball.pos.y < 0) {
-            this.ball.pos.y = this.ball.pos.y < 0 ? 0 : this.box.getHeight() - this.ball.getWidth();
-            this.ball.vel.y = -this.ball.vel.y;
+        potCols.forEach((col) => {
+            if (this.balls[col[0]].getDistance(this.balls[col[1]]) <= this.balls[col[0]].radius + this.balls[col[1]].radius) {
+                let dv1 = Vector2d.sub(this.balls[col[0]].vel, this.balls[col[1]].vel);
+                let dc1 = Vector2d.sub(this.balls[col[0]].pos, this.balls[col[1]].pos);
+                this.balls[col[0]].vel = Vector2d.sub(this.balls[col[0]].vel, Vector2d.scale(dc1, (Vector2d.dot(dv1, dc1) / (Vector2d.mag(dc1) * Vector2d.mag(dc1)))));
+
+                let dv2 = Vector2d.sub(this.balls[col[1]].vel, this.balls[col[0]].vel);
+                let dc2 = Vector2d.sub(this.balls[col[1]].pos, this.balls[col[0]].pos);
+                this.balls[col[1]].vel = Vector2d.sub(this.balls[col[1]].vel, Vector2d.scale(dc2, (Vector2d.dot(dv2, dc2) / (Vector2d.mag(dc2) * Vector2d.mag(dc2)))));
+            }
+        });
+
+        for (let ball of this.balls) {
+            if (ball.pos.x + ball.getWidth() >= this.box.getWidth() || ball.pos.x < 0) {
+                ball.pos.x = ball.pos.x < 0 ? 0 : this.box.getWidth() - ball.getWidth();
+                ball.vel.x = -ball.vel.x;
+            }
+
+            if (ball.pos.y + ball.getWidth() >= this.box.getHeight() || ball.pos.y < 0) {
+                ball.pos.y = ball.pos.y < 0 ? 0 : this.box.getHeight() - ball.getWidth();
+                ball.vel.y = -ball.vel.y;
+            }
         }
     }
 
@@ -30,9 +80,9 @@ export class Simulation {
         const dt = Math.floor(1000 / updateRate);
 
         this.i = setInterval(() => {
-            this.processCollision();
-            this.ball.move(dt);
-            this.ball.render();
+            this.processCollisions();
+            this.balls.forEach((ball) => ball.move(dt));
+            this.balls.forEach((ball) => ball.render());
         }, dt);
     }
 

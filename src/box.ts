@@ -8,6 +8,7 @@ function isSize(obj: any): obj is Size {
 
 export class Box {
     element: HTMLElement;
+    size: Size;
 
     constructor();
     constructor(box: Box);
@@ -15,26 +16,25 @@ export class Box {
     constructor(sizeOrBox: Box | Size = { w: 100, h: 100 }) {
         this.element = document.createElement('div');
         this.element.className = styles.box;
-        let size: Size;
         if (isSize(sizeOrBox)) {
-            size = { ...sizeOrBox };
+            this.size = { ...sizeOrBox };
         } else if (sizeOrBox instanceof Box) {
-            size = { w: sizeOrBox.getWidth(), h: sizeOrBox.getHeight() };
+            this.size = { w: sizeOrBox.getWidth(), h: sizeOrBox.getHeight() };
         } else {
             throw new Error('Wrong set of arguments for box object');
         }
-        this.element.style.width = `${size.w}px`;
-        this.element.style.height = `${size.h}px`;
+        this.element.style.width = `${this.size.w}px`;
+        this.element.style.height = `${this.size.h}px`;
         this.element.style.borderWidth = '5px';
         console.log(this.getBorderWidth());
     }
 
     getWidth(): number {
-        return this.element.getBoundingClientRect().width;
+        return this.size.w;
     }
 
     getHeight(): number {
-        return this.element.getBoundingClientRect().height;
+        return this.size.h;
     }
 
     getX(): number {
